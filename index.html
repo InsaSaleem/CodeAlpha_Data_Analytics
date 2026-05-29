@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CodeAlpha Data Analytics Project Dashboard</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* ============================================================
+       THEME CONFIGURATION & DESIGN SYSTEM VARIABLES
+    ============================================================ */
+    :root {
+      --bg-void:        #030208;
+      --bg-deep:        #090714;
+      --bg-card:        rgba(15, 11, 30, 0.7);
+      --glass-border:   rgba(255, 255, 255, 0.08);
+      
+      /* Vibrant Colors for Visuals */
+      --accent-emerald:  #05ff9b;
+      --accent-amethyst: #bd00ff;
+      --accent-neonblue: #00d9ff;
+      --accent-crimson:  #ff0055;
+      --accent-amber:    #ffaa00;
+      
+      /* Typography Colors */
+      --text-primary:   #f3f0fa;
+      --text-secondary: #a29db8;
+      --text-muted:      #5d5875;
+      
+      --font-display:   'Space Grotesk', sans-serif;
+      --font-body:      'Plus Jakarta Sans', sans-serif;
+      --font-mono:      'JetBrains Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+
+    body {
+      background: var(--bg-void);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    #starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+    /* Background Neon Glow Effects */
+    .mesh { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;}
+    .mesh::before {
+      content: ''; position: absolute; width: 600px; height: 600px; top: -100px; left: -50px;
+      background: radial-gradient(circle, rgba(189,0,255,0.12) 0%, transparent 70%);
+    }
+    .mesh::after {
+      content: ''; position: absolute; width: 600px; height: 600px; bottom: 0; right: -50px;
+      background: radial-gradient(circle, rgba(5,255,155,0.08) 0%, transparent 70%);
+    }
+
+    /* ============================================================
+       NAVIGATION PLATFORM
+    ============================================================ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      padding: 0 5%; height: 74px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(3,2,8,0.85); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .nav-logo { font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; letter-spacing: 0.05em; color: var(--accent-emerald); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    .nav-logo-dot { width: 8px; height: 8px; background: var(--accent-emerald); border-radius: 50%; box-shadow: 0 0 10px var(--accent-emerald); }
+    
+    .nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
+    .nav-links a { text-decoration: none; color: var(--text-secondary); font-family: var(--font-display); font-size: 0.8rem; font-weight: 500; text-transform: uppercase; transition: color 0.25s; }
+    .nav-links a:hover { color: var(--accent-emerald); }
+
+    /* ============================================================
+       SYMMETRIC CONTAINER LOGIC
+    ============================================================ */
+    .container { 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      padding: 0 4%; 
+    }
+
+    /* Standardized Gap System for all tasks and sections */
+    .section-gap { 
+      margin-bottom: 50px; 
+    }
+
+    .section-label { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent-amethyst); margin-bottom: 0.6rem; display: flex; align-items: center; gap: 10px; }
+    .section-label::before { content: ''; width: 16px; height: 1px; background: var(--accent-amethyst); display: block; }
+    .section-title { font-family: var(--font-display); font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: #fff; }
+    .section-desc { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 2rem; }
+
+    /* ============================================================
+       HERO SYSTEM WITH SINGLE ROW COMPONENT GRID
+    ============================================================ */
+    #hero { display: flex; align-items: center; justify-content: center; text-align: center; position: relative; padding: 130px 0 0 0; }
+    .hero-content { position: relative; z-index: 2; width: 100%; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(189,0,255,0.06); border: 1px solid rgba(189,0,255,0.2); border-radius: 100px; padding: 6px 16px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-amethyst); margin-bottom: 1.5rem; }
+    .hero-title { font-family: var(--font-display); font-size: clamp(2rem, 4.5vw, 3.2rem); font-weight: 700; line-height: 1.2; margin-bottom: 1rem; color: #fff; }
+    .hero-subtitle { font-size: 1rem; color: var(--text-secondary); max-width: 650px; margin: 0 auto 1.5rem auto; }
+    
+    .hero-btn-container { margin-bottom: 2rem; }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 1rem;
+      width: min(100%, 980px);
+      margin: 20px auto 0;
+      align-items: stretch;
+      justify-items: center;
+    }
+    .hero-stat {
+      width: 100%;
+      max-width: 240px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(16px);
+      border-radius: 20px;
+      padding: 24px 18px;
+      text-align: center;
+      transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+      display: grid;
+      place-items: center;
+      min-width: 0;
+    }
+    .hero-stat:hover {
+      border-color: rgba(5, 255, 155, 0.35);
+      transform: translateY(-4px);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .hero-stat-num {
+      font-family: var(--font-display);
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: #00e5ff;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .hero-stat-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.65);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    .hero-stat-num { font-family: var(--font-display); font-size: 1.8rem; font-weight: 700; color: var(--accent-neonblue); display: block; margin-bottom: 4px; }
+    .hero-stat-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-secondary); letter-spacing: 0.05em; text-transform: uppercase; }
+
+    @media (max-width: 768px) {
+      .hero-stats { flex-direction: column; }
+      .hero-stat { width: 100%; }
+    }
+
+    /* ============================================================
+       TASK MODULE CARD HOUSINGS
+    ============================================================ */
+    .card-shell { 
+      background: var(--bg-card); 
+      border: 1px solid var(--glass-border); 
+      backdrop-filter: blur(16px); 
+      border-radius: 16px; 
+      padding: 2.2rem; 
+    }
+    
+    /* ============================================================
+       TASK 2 LAYER: 2 COLUMNS (EDA & MISSING VALUES)
+    ============================================================ */
+    .eda-matrix-layout {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+    @media (max-width: 768px) { .eda-matrix-layout { grid-template-columns: 1fr; } }
+
+    /* ============================================================
+       TASK 3 VISUALIZATION MATRIX (SHORT COMPRESSED LAYOUT)
+    ============================================================ */
+    .visualization-matrix { 
+      display: grid; 
+      grid-template-columns: repeat(2, 1fr); 
+      gap: 1.5rem; 
+    }
+    @media (max-width: 900px) {
+      .visualization-matrix { grid-template-columns: 1fr; }
+    }
+    .sub-chart-card { background: rgba(4,3,10,0.5); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; }
+    .sub-chart-title { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 1rem; }
+    
+    .mini-canvas-container { position: relative; width: 100%; height: 160px; }
+
+    /* ============================================================
+       TASK 4 SENTIMENT MODULE LAYOUT
+    ============================================================ */
+    .sentiment-matrix-layout {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+    @media (max-width: 768px) { .sentiment-matrix-layout { grid-template-columns: 1fr; } }
+    .cloud-canvas-box { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: center; padding: 1.5rem; background: rgba(3,2,8,0.4); border-radius: 12px; border: 1px solid var(--glass-border); height: 160px; overflow: hidden; }
+    .cloud-node { font-family: var(--font-display); font-weight: 600; }
+
+    /* ============================================================
+       DEVELOPER BLOCK DESIGN
+    ============================================================ */
+    .developer-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      text-align: center;
+      position: relative;
+    }
+    .profile-avatar-circle {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: rgba(3,2,8,0.6);
+      border: 2px solid var(--accent-neonblue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.2rem auto;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: #fff;
+      box-shadow: 0 0 15px rgba(0, 217, 255, 0.2);
+    }
+    .developer-name {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.2rem;
+    }
+    .developer-role {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent-emerald);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.2rem;
+    }
+    .developer-bio {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 1.8rem auto;
+    }
+    .github-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: transparent;
+      color: #fff;
+      border: 1px solid var(--accent-emerald);
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.25s ease;
+    }
+    .github-btn:hover {
+      background: var(--accent-emerald);
+      color: var(--bg-void);
+      box-shadow: 0 0 15px rgba(5, 255, 155, 0.3);
+    }
+
+    /* ============================================================
+       TABLE LAYOUT STYLING
+    ============================================================ */
+    .table-container { overflow-x: auto; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(3,2,8,0.4); margin-top: 1rem; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+    th { padding: 12px 16px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--glass-border); background: rgba(9,7,20,0.6); }
+    td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.02); color: var(--text-secondary); font-family: var(--font-mono); }
+    .badge-pill { display: inline-block; font-size: 0.65rem; padding: 2px 8px; border-radius: 20px; font-family: var(--font-mono); background: rgba(5,255,155,0.1); color: var(--accent-emerald); border: 1px solid rgba(5,255,155,0.2); }
+
+    /* ============================================================
+       FOOTER ARCHITECTURE
+    ============================================================ */
+    footer { position: relative; z-index: 2; padding: 3rem 0 2rem 0; border-top: 1px solid var(--glass-border); background: #020105; }
+    .footer-inner { display: flex; justify-content: space-between; align-items: center; }
+    @media (max-width: 768px) { .footer-inner { flex-direction: column; gap: 1.5rem; text-align: center; } .footer-uni { text-align: center !important; } }
+    .footer-brand { font-family: var(--font-display); font-size: 0.85rem; font-weight: 700; color: var(--accent-emerald); margin-bottom: 0.3rem; }
+    .footer-desc { font-size: 0.8rem; color: var(--text-muted); }
+    .footer-uni { text-align: right; }
+    .footer-uni-name { font-family: var(--font-display); font-size: 0.8rem; color: var(--text-secondary); }
+    .footer-course { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem; }
+  </style>
+</head>
+<body>
+
+  <canvas id="starfield"></canvas>
+
+  <nav>
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-dot"></div>
+      CODEALPHA INTERNSHIP
+    </a>
+    <ul class="nav-links">
+      <li><a href="#task1">Task 1</a></li>
+      <li><a href="#task2">Task 2</a></li>
+      <li><a href="#task3">Task 3</a></li>
+      <li><a href="#task4">Task 4</a></li>
+      <li><a href="#developer">Developer</a></li>
+    </ul>
+  </nav>
+
+  <div id="hero" class="container section-gap">
+    <div class="mesh"></div>
+    <div class="hero-content">
+      <div class="hero-badge">DATA INTERNSHIP TASK OVERVIEW</div>
+      <h1 class="hero-title">Data Analysis & Web Tasks</h1>
+      <p class="hero-subtitle">All internship assignment modules completed, configured, and visual charts presented cleanly below.</p>
+      
+      <div class="hero-btn-container">
+        <a href="https://github.com/InsaSaleem/CodeAlpha_Data_Analytics" target="_blank" class="github-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:middle;">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+          Visit GitHub Repository
+        </a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="hero-stat-num">1,000+</span>
+          <span class="hero-stat-label">Records Crawled</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">100%</span>
+          <span class="hero-stat-label">Missing Matrix Filled</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">Live</span>
+          <span class="hero-stat-label">HTML UI Layer</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">92%</span>
+          <span class="hero-stat-label">Sentiment Consensus</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div id="task1" class="card-shell section-gap">
+      <div class="section-label">Task Module 01</div>
+      <h2 class="section-title">Web Scraping</h2>
+      <p class="section-desc">Extracted data from the online website and saved the processed items locally inside a clean CSV format file.</p>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Book Title Reference</th>
+              <th>Price Index</th>
+              <th>Rating Value</th>
+              <th>Stock Verification</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>A Light in the Attic</td>
+              <td style="color: var(--accent-neonblue);">£51.77</td>
+              <td style="color: var(--accent-amber);">★★★☆☆</td>
+              <td><span class="badge-pill">In Stock</span></td>
+            </tr>
+            <tr>
+              <td>Tipping the Velvet</td>
+              <td style="color: var(--accent-neonblue);">£53.74</td>
+              <td style="color: var(--accent-amber);">★★★★★</td>
+              <td><span class="badge-pill">In Stock</span></td>
+            </tr>
+            <tr>
+              <td>Sharp Objects</td>
+              <td style="color: var(--accent-neonblue);">£47.82</td>
+              <td style="color: var(--accent-amber);">★★★★☆</td>
+              <td><span class="badge-pill">In Stock</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="task2" class="card-shell section-gap">
+      <div class="section-label">Task Module 02</div>
+      <h2 class="section-title">Exploratory Data Analysis (EDA)</h2>
+      <p class="section-desc">Performed data analysis operations to clean dataset records and handle missing profile attributes.</p>
+      
+      <div class="eda-matrix-layout">
+        <div class="sub-chart-card">
+          <div class="sub-chart-title">EDA Analysis Spread</div>
+          <div class="mini-canvas-container">
+            <canvas id="edaChart"></canvas>
+          </div>
+        </div>
+        <div class="sub-chart-card">
+          <div class="sub-chart-title">Missing Values Check</div>
+          <div class="mini-canvas-container">
+            <canvas id="missingChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="task3" class="card-shell section-gap">
+      <div class="section-label">Task Module 03</div>
+      <h2 class="section-title">Data Visualization</h2>
+      <p class="section-desc">Created visual graphs to represent dataset patterns clearly using line, bar, pie, and heatmap matrices.</p>
+
+      <div class="visualization-matrix">
+        <div class="sub-chart-card">
+          <div class="sub-chart-title">Chart 1: Line Graph (Operational Trends)</div>
+          <div class="mini-canvas-container">
+            <canvas id="chart1Line"></canvas>
+          </div>
+        </div>
+        <div class="sub-chart-card">
+          <div class="sub-chart-title">Chart 2: Bar Chart (Age Distribution)</div>
+          <div class="mini-canvas-container">
+            <canvas id="chart2Bar"></canvas>
+          </div>
+        </div>
+        <div class="sub-chart-card">
+          <div class="sub-chart-title">Chart 3: Pie Chart (Ticket Allocation)</div>
+          <div class="mini-canvas-container">
+            <canvas id="chart3Pie"></canvas>
+          </div>
+        </div>
+        <div class="sub-chart-card">
+          <div class="sub-chart-title">Chart 4: Heatmap Chart (Correlation Value)</div>
+          <div class="mini-canvas-container">
+            <canvas id="chart4Heatmap"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="task4" class="card-shell section-gap">
+      <div class="section-label">Task Module 04</div>
+      <h2 class="section-title">Sentiment Analysis</h2>
+      <p class="section-desc">Analyzed customer review datasets to determine textual feedback polarity scores.</p>
+
+      <div class="sentiment-matrix-layout">
+        <div class="sub-chart-card">
+          <div class="sub-chart-title">Sentiment Dashboard</div>
+          <div class="mini-canvas-container">
+            <canvas id="sentimentDashboardChart"></canvas>
+          </div>
+        </div>
+        <div class="sub-chart-card">
+          <div class="sub-chart-title">Wordcloud View</div>
+          <div class="cloud-canvas-box">
+            <span class="cloud-node" style="font-size: 1.6rem; color: var(--accent-emerald);">Excellent</span>
+            <span class="cloud-node" style="font-size: 1.0rem; color: var(--text-secondary);">Delivery</span>
+            <span class="cloud-node" style="font-size: 1.3rem; color: var(--accent-amethyst);">Perfect</span>
+            <span class="cloud-node" style="font-size: 1.1rem; color: var(--accent-neonblue);">Fast</span>
+            <span class="cloud-node" style="font-size: 1.4rem; color: var(--accent-amber);">Recommend</span>
+            <span class="cloud-node" style="font-size: 0.8rem; color: var(--text-muted);">Pricing</span>
+            <span class="cloud-node" style="font-size: 1.1rem; color: var(--text-primary);">Good</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="developer" class="developer-card section-gap">
+      <div class="section-label">Lead Architect</div>
+      <div class="profile-avatar-circle">IS</div>
+      <h3 class="developer-name">Insa Saleem</h3>
+      <div class="developer-role">Passionate Frontend Developer & Data Analyst</div>
+      <p class="developer-bio">
+        Responsible for managing end-to-end pipeline creation, machine learning integration, and creating responsive visualization dashboard layers across all operational targets.
+      </p>
+      <a href="https://github.com/InsaSaleem?tab=repositories" target="_blank" class="github-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:middle;">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+        Github
+      </a>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="container footer-inner">
+      <div>
+        <div class="footer-brand">CODEALPHA ANALYTICS FRAMEWORK</div>
+        <p class="footer-desc">Professional workspace validating core competencies in web harvesting workflows, diagnostic exploratory analytics, and applied computational linguistics processing pipelines.</p>
+      </div>
+      <div class="footer-uni">
+        <div class="footer-uni-name">Fatima Jinnah Women University</div>
+        <div class="footer-course">Department of Computer Science</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Background Space Particles Script
+    const canvas = document.getElementById('starfield');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initStars();
+    }
+
+    function initStars() {
+      stars = [];
+      const count = Math.floor((canvas.width * canvas.height) / 4000);
+      for(let i=0; i<count; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 1.2,
+          alpha: Math.random(),
+          speed: Math.random() * 0.01 + 0.003
+        });
+      }
+    }
+
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      stars.forEach(star => {
+        ctx.beginPath();
+        ctx.globalAlpha = star.alpha;
+        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+        ctx.fill();
+        star.alpha += star.speed;
+        if(star.alpha > 1 || star.alpha < 0) star.speed = -star.speed;
+      });
+      ctx.globalAlpha = 1.0;
+      requestAnimationFrame(drawStars);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    drawStars();
+
+    // Chart Options Style Setup
+    const gridStyle = { color: 'rgba(255, 255, 255, 0.03)' };
+    const labelStyle = { color: '#a29db8', font: { family: 'JetBrains Mono', size: 10 } };
+
+    // TASK 2: EDA & Missing Values Chart Graphs
+    new Chart(document.getElementById('edaChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Analyzed Columns', 'Cleaned Features', 'Outliers Handled'],
+        datasets: [{ data: [12, 10, 5], backgroundColor: '#bd00ff', borderRadius: 4 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: gridStyle, ticks: labelStyle }, y: { grid: gridStyle, ticks: labelStyle } } }
+    });
+
+    new Chart(document.getElementById('missingChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Age Column', 'Cabin Column', 'Embarked Column'],
+        datasets: [{ label: 'Missing Filled', data: [177, 687, 2], backgroundColor: '#ffaa00', borderRadius: 4 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: gridStyle, ticks: labelStyle }, y: { grid: gridStyle, ticks: labelStyle } } }
+    });
+
+    // TASK 3: 4 Distinct Chart Renderings
+    new Chart(document.getElementById('chart1Line'), {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{ data: [94, 88, 91, 95, 92, 97], borderColor: '#05ff9b', borderWidth: 3, tension: 0.2, pointBackgroundColor: '#00d9ff', fill: false }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: gridStyle, ticks: labelStyle }, y: { grid: gridStyle, ticks: labelStyle } } }
+    });
+
+    new Chart(document.getElementById('chart2Bar'), {
+      type: 'bar',
+      data: {
+        labels: ['0-15', '16-30', '31-45', '46-60'],
+        datasets: [{ data: [80, 290, 220, 110], backgroundColor: '#00d9ff', borderRadius: 4 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: gridStyle, ticks: labelStyle }, y: { grid: gridStyle, ticks: labelStyle } } }
+    });
+
+    new Chart(document.getElementById('chart3Pie'), {
+      type: 'pie',
+      data: {
+        labels: ['Upper Class', 'Middle Class', 'Lower Class'],
+        datasets: [{ data: [220, 180, 490], backgroundColor: ['#05ff9b', '#bd00ff', '#ffaa00'], borderWidth: 0 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: labelStyle } } }
+    });
+
+    new Chart(document.getElementById('chart4Heatmap'), {
+      type: 'bar',
+      data: {
+        labels: ['Age-Fare', 'Pclass-Fare', 'Age-Pclass'],
+        datasets: [{ data: [0.12, -0.55, -0.37], backgroundColor: '#ff0055', borderRadius: 4 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: gridStyle, ticks: labelStyle }, y: { grid: gridStyle, ticks: labelStyle } } }
+    });
+
+    // TASK 4: Sentiment Display Analytics
+    new Chart(document.getElementById('sentimentDashboardChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Positive', 'Neutral', 'Negative'],
+        datasets: [{ data: [70, 22, 8], backgroundColor: ['#05ff9b', '#5d5875', '#ff0055'], borderWidth: 0 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: labelStyle } } }
+    });
+  </script>
+</body>
+</html>
